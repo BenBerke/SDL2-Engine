@@ -34,6 +34,15 @@ class GameObject{
             return nullptr;
         }
 
+        template<typename T>
+        std::vector<T*> GetComponents() {
+            std::vector<T*> matches;
+            for (auto& c : components) {
+                if (auto casted = dynamic_cast<T*>(c.get())) matches.push_back(casted);
+            }
+            return matches;
+        }
+
         void Update() {
         for (auto& c : components)
             c->Update();  
