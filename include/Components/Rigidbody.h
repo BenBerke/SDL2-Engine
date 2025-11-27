@@ -6,40 +6,48 @@
 #include "GameTime.h"
 #include <algorithm>
 
-class Rigidbody : public Component{
+class Rigidbody : public Component {
 public:
     Vector2 velocity{0.0f, 0.0f};
+    Vector2 gravity;
+    bool hasGravity = true;
+    float angularVelocity = 0.0f;
+    float torque = 0.0f;
+    float inertia = 1.0f;
+    float invInertia = 1.0f;
+    float angularDamping = .99f;
+    float linearDamping = .99f;
+    bool isKinematic = false;
 
 private:
     Vector2 maxVelocity;
-    Vector2 gravity;
-
-    bool isKinematic;
-    bool hasGravity;
 
 public:
     Rigidbody(Vector2 g = DEFAULT_GRAVITY, Vector2 mv = DEFAULT_MAX_VELOCITY, bool ik = false, bool hg = true)
-     : velocity{0.0f, 0.0f}, maxVelocity(mv), gravity(g), isKinematic(ik), hasGravity(hg) {}
+        : velocity{0.0f, 0.0f},
+          gravity(g),
+          hasGravity(hg),
+          angularVelocity(0.0f),
+          torque(0.0f),
+          inertia(1.0f),
+          invInertia(1.0f),
+          angularDamping(.99f),
+          linearDamping(.99f),
+          isKinematic(ik),
+          maxVelocity(mv)
+    {}
+
     ~Rigidbody() = default;
 
-    void Update() override{
-        // Movement and collision handled centrally by Physics.
-    }
+    void Update() override {}
 
-    void AddForce(Vector2 vel){
-        velocity += vel;
-    }
+    void AddForce(const Vector2& vel) { velocity += vel; }
 
-    Vector2 GetGravity() const{
-        return gravity;
-    }
+    Vector2 GetGravity() const { return gravity; }
 
-    Vector2 GetMaxVelocity() const{
-        return maxVelocity;
-    }
+    Vector2 GetMaxVelocity() const { return maxVelocity; }
 
-    bool HasGravity() const{
-        return hasGravity;
-    }
+    bool HasGravity() const { return hasGravity; }
 
+    void ApplyTorque(float t) { torque += t; }
 };

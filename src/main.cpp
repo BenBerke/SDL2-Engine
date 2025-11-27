@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
     player.AddComponent<SpriteRenderer>(Vector2{1,1});
     player.AddComponent<BoxCollider>(1.0f, 1.0f);
     player.AddComponent<Rigidbody>();
+    player.GetComponent<Rigidbody>()->hasGravity = false;
     player.GetComponent<Transform>()->rotation = 67;
 
     GameObject& floor = currentScene.CreateObject<GameObject>();
@@ -75,6 +76,11 @@ int main(int argc, char* argv[])
         if (playerRb){
             if(InputManager::GetKey(SDL_SCANCODE_A)) playerRb->AddForce(Vector2{-0.2f, 0.0f});
             if(InputManager::GetKey(SDL_SCANCODE_D)) playerRb->AddForce(Vector2{0.2f, 0.0f});
+            if(InputManager::GetKey(SDL_SCANCODE_W)) playerRb->AddForce(Vector2{0.0f, 0.2f});
+            if(InputManager::GetKey(SDL_SCANCODE_S)) playerRb->AddForce(Vector2{0.0f, -0.2f});
+
+            if(InputManager::GetKey(SDL_SCANCODE_X)) playerRb->ApplyTorque(1);
+            if(InputManager::GetKeyUp(SDL_SCANCODE_X)) playerRb->angularVelocity = 0;
         }
         RenderScene(renderer, currentScene);
     }

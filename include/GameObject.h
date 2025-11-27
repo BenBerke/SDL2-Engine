@@ -20,7 +20,7 @@ class GameObject{
         template<typename T, typename... Args>
         T& AddComponent(Args&&... args) {
             auto comp = std::make_unique<T>(std::forward<Args>(args)...);
-            comp->owner = this;
+            comp->OnAttach(this);
             T& ref = *comp;
             components.push_back(std::move(comp));
             return ref;

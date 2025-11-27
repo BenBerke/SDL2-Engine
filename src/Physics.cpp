@@ -11,6 +11,8 @@
 
 #include "Components/Collider.h"
 #include "Components/Rigidbody.h"
+
+#include "config.h"
 #include "Components/CustomBehaviour.h"
 #include "GameTime.h"
 #include "GameObject.h"
@@ -18,7 +20,7 @@
 #include "Scene.h"
 
 struct SpatialGrid {
-    float cellSize = 128.0f;
+    float cellSize = SPATIAL_GRID_SIZE;
     std::unordered_map<int64_t, std::vector<Collider*>> cells;
 
     void Clear() {cells.clear(); }
@@ -344,8 +346,8 @@ void Update(const Scene& scene){
         }
 
         Vector2 maxVel = rb->GetMaxVelocity();
-        velocity.x = std::min(velocity.x, maxVel.x);
-        velocity.y = std::min(velocity.y, maxVel.y);
+        velocity.x = std::clamp(velocity.x, -maxVel.x, maxVel.x);
+        velocity.y = std::clamp(velocity.y, -maxVel.y, maxVel.y);
 
         const Vector2 startPos = transform->position;
         const Vector2 delta = velocity * GameTime::deltaTime;
@@ -382,6 +384,14 @@ void Update(const Scene& scene){
 
         resolveAxis(delta.x, true);
         resolveAxis(delta.y, false);
+
+        if(rb->inertia > 0.0f){
+            rb->angularVelocity += rb->torque * rb->invInertia * GameTime::deltaTime;
+            rb->torque = 0.0f;
+        }
+        transform->rotation += rb->angularVelocity * GameTime::deltaTime; 
+        rb->angularVelocity *= std::pow(rb->angularDamping, GameTime::deltaTime * 60.0f);
+        rb->velocity *= rb->linearDamping;
 
         transform->position = newPos;
         rb->velocity = velocity;

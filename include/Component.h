@@ -12,4 +12,8 @@ class Component{
     virtual void Start() {}
 
     virtual void Update() {}
+
+    virtual void OnAttach(GameObject* newOwner) {
+        owner = newOwner;
+    }
 };
