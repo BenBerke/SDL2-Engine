@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
     player.AddComponent<SpriteRenderer>(Vector2{1,1});
     player.AddComponent<BoxCollider>(1.0f, 1.0f);
     player.AddComponent<Rigidbody>();
+    player.GetComponent<Transform>()->rotation = 67;
 
     GameObject& floor = currentScene.CreateObject<GameObject>();
     floor.GetComponent<Transform>()->position = Vector2{0, -7};

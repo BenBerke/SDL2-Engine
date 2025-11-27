@@ -29,6 +29,14 @@ struct Vector2{
         y /= other.y;
         return *this;
     }
+    bool operator==(const Vector2& other) const {
+        if(x == other.x && y == other.y) return true;
+        return false;
+    }
+    bool operator!=(const Vector2& other) const {
+        if(x == other.x && y == other.y) return false;
+        return true;
+    }
 
     float Length() const{ return std::sqrt(x*x + y*y); }
     Vector2 Normalized() const { 

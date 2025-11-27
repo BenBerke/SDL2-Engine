@@ -42,5 +42,7 @@ public:
     ~Collider() override = default;
 
     void Update() override {}
+
+    void Split(Polygon& vertices){}
 };
 

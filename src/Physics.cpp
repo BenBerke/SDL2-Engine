@@ -4,6 +4,10 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <unordered_map>
+
+#include "core/Vector2.h"
+#include "core/Matrix3x3.h"
 
 #include "Components/Collider.h"
 #include "Components/Rigidbody.h"
@@ -12,6 +16,36 @@
 #include "GameObject.h"
 #include "Components/Transform.h"
 #include "Scene.h"
+
+struct SpatialGrid {
+    float cellSize = 128.0f;
+    std::unordered_map<int64_t, std::vector<Collider*>> cells;
+
+    void Clear() {cells.clear(); }
+
+    int64_t Hash(int x, int y) const { return ((int64_t)x << 32) ^ (int64_t)y; }
+
+    void Insert(Collider* collider, const Vector2& pos){
+        int gx = static_cast<int>(std::floor(pos.x / cellSize)); 
+        int gy = static_cast<int>(std::floor(pos.y / cellSize)); 
+        cells[Hash(gx, gy)].push_back(collider);
+    }
+
+    std::vector<std::vector<Collider*>> GetNeighborCells(int gx, int gy) const{
+        std::vector<std::vector<Collider*>> neighbors;
+        neighbors.reserve(5);
+
+        for(int dy = -1; dy <= 1; ++dy){
+            for(int dx = -1; dx <= 1; ++dx){
+                int64_t h = Hash(gx + dx, gy + dy);
+                auto it = cells.find(h);
+                if(it != cells.end()) neighbors.push_back(it->second);
+            }
+        }
+
+        return neighbors;
+    }
+};
 
 namespace{
 std::vector<Vector2> GetAxes(const Polygon& poly){
@@ -60,25 +94,52 @@ void NotifyCollision(Collider* self, Collider* other, void (CustomBehaviour::*fn
 }
 } //namespace 
 
+Vector2 TransformPoint(const Vector2& point, const Matrix3x3 mat){
+    float x = point.x * mat.m[0][0] + point.y * mat.m[0][1] + mat.m[0][2];
+    float y = point.x * mat.m[1][0] + point.y * mat.m[1][1] + mat.m[1][2];
+
+    return {x, y};
+}
+
 namespace Physics{
 static std::vector<Collider*> colliders;
 static std::vector<Rigidbody*> rigidbodies;
 static std::vector<std::pair<Collider*, Collider*>> previousCollisions;
 
-static Polygon OffsetShape(const Polygon& shape, const Vector2& position){
+static Polygon ToWorldSpaceFull(const Collider& collider, const Vector2& overridePos = Vector2{0.0f, 0.0f})
+{
     Polygon worldPoly;
-    worldPoly.vertices.reserve(shape.vertices.size());
-    for(const auto& v : shape.vertices){
-        worldPoly.vertices.push_back(v + position);
+    const Transform* transform = collider.owner ? collider.owner->GetComponent<Transform>() : nullptr;
+    if (!transform) return worldPoly;
+
+    Matrix3x3 mat = transform->GetMatrix();
+
+    if (overridePos != Vector2{0, 0}) {
+        mat.m[0][2] = overridePos.x;
+        mat.m[1][2] = overridePos.y;
     }
+
+    worldPoly.vertices.reserve(collider.shape.vertices.size());
+    for (const auto& v : collider.shape.vertices)
+        worldPoly.vertices.push_back(TransformPoint(v, mat));
+
     return worldPoly;
 }
+
 
 static Polygon ToWorldSpace(const Collider& collider){
     Polygon worldPoly;
     const Transform* transform = collider.owner ? collider.owner->GetComponent<Transform>() : nullptr;
-    const Vector2 pos = transform ? transform->position : Vector2{0.0f, 0.0f};
-    return OffsetShape(collider.shape, pos);
+    if(!transform) return worldPoly;
+
+    Matrix3x3 mat = transform->GetMatrix();
+    worldPoly.vertices.reserve(collider.shape.vertices.size());
+
+    for(const auto& v : collider.shape.vertices){
+        worldPoly.vertices.push_back(TransformPoint(v, mat));
+    }
+
+    return worldPoly;
 }
 
 bool Overlaps(float minA, float maxA, float minB, float maxB){
@@ -161,7 +222,6 @@ bool CirclePolygonCollision(const Vector2& circleCenter, float radius, const Pol
     return true;
 }
 
-
 bool CheckCollision(const Collider& a, const Collider& b){
     const Transform* tA = a.owner ? a.owner->GetComponent<Transform>() : nullptr;
     const Transform* tB = b.owner ? b.owner->GetComponent<Transform>() : nullptr;
@@ -183,40 +243,46 @@ bool CheckCollision(const Collider& a, const Collider& b){
 static bool CollidesAt(const Collider& collider, const Vector2& position){
     if (colliders.empty()) return false;
 
-    const bool isCircle = collider.type == ColliderType::Circle;
+    const bool isCircle  = collider.type == ColliderType::Circle;
     const bool isPolygon = collider.type == ColliderType::Polygon;
     if (isPolygon && collider.shape.vertices.empty()) return false;
-    if (isCircle && collider.circle.radius <= 0.0f) return false;
+    if (isCircle && collider.circle.radius <= 0.0f)   return false;
 
     Polygon subjectPoly;
     if (isPolygon){
-        subjectPoly = OffsetShape(collider.shape, position);
+        // Moving collider at *test* position
+        subjectPoly = ToWorldSpaceFull(collider, position);
     }
 
     for (Collider* other : colliders){
-        if(!other || other == &collider) continue;
-        if(!other->owner || !other->owner->isActive) continue;
+        if (!other || other == &collider) continue;
+        if (!other->owner || !other->owner->isActive) continue;
 
         const Transform* otherTransform = other->owner->GetComponent<Transform>();
-        if(!otherTransform) continue;
+        if (!otherTransform) continue;
 
         const Vector2 otherPos = otherTransform->position;
 
         if (isCircle){
             if (other->type == ColliderType::Circle){
                 if (other->circle.radius <= 0.0f) continue;
-                if (CircleCircleCollision(position, collider.circle.radius, otherPos, other->circle.radius)) return true;
-            } else{
-                Polygon target = OffsetShape(other->shape, otherPos);
-                if (CirclePolygonCollision(position, collider.circle.radius, target)) return true;
+                if (CircleCircleCollision(position, collider.circle.radius,
+                                          otherPos, other->circle.radius))
+                    return true;
+            } else { // circle vs polygon
+                Polygon target = ToWorldSpaceFull(*other);
+                if (CirclePolygonCollision(position, collider.circle.radius, target))
+                    return true;
             }
-        } else{ // polygon
-            Polygon target = OffsetShape(other->shape, otherPos);
+        } else { // subject is polygon
             if (other->type == ColliderType::Circle){
                 if (other->circle.radius <= 0.0f) continue;
-                if (CirclePolygonCollision(otherPos, other->circle.radius, subjectPoly)) return true;
-            } else{
-                if (CheckCollision(subjectPoly, target)) return true;
+                if (CirclePolygonCollision(otherPos, other->circle.radius, subjectPoly))
+                    return true;
+            } else { // polygon vs polygon
+                Polygon target = ToWorldSpaceFull(*other);
+                if (CheckCollision(subjectPoly, target))
+                    return true;
             }
         }
     }
@@ -230,9 +296,12 @@ bool Collides(const Collider& collider){
     return CollidesAt(collider, transform->position);
 }
 
+SpatialGrid grid;
+
 void Update(const Scene& scene){
     colliders.clear();
     rigidbodies.clear();
+    grid.Clear();
 
     const auto& objects = scene.GetObjects();
     for (const auto& obj : objects){
@@ -244,6 +313,13 @@ void Update(const Scene& scene){
             rigidbodies.push_back(rb);
         }
     }
+
+    for(Collider* c : colliders){
+        Transform* t = c->owner->GetComponent<Transform>();
+        if (!t) continue;
+        grid.Insert(c, t->position);
+    }
+
 
     previousCollisions.erase(
         std::remove_if(previousCollisions.begin(), previousCollisions.end(),
@@ -312,15 +388,24 @@ void Update(const Scene& scene){
     }
 
     std::vector<std::pair<Collider*, Collider*>> currentCollisions;
-    currentCollisions.reserve(colliders.size());
+    for(auto& [cellkey, list] : grid.cells){
+        int gx = static_cast<int>(cellkey >> 32);
+        int gy = static_cast<int>(cellkey & 0xFFFFFFFF);
 
-    for(size_t i = 0; i < colliders.size(); ++i){
-        for(size_t j = i + 1; j < colliders.size(); ++j){
-            if (CheckCollision(*colliders[i], *colliders[j])) {
-                currentCollisions.push_back(MakeOrderedPair(colliders[i], colliders[j]));
+        auto neighborsList = grid.GetNeighborCells(gx, gy);
+
+        for(Collider* a : list){
+            for(const auto& nlist : neighborsList){
+                for(Collider* b : nlist){
+                    if(a == b) continue;
+                    if(a < b){
+                        if(CheckCollision(*a, *b)) currentCollisions.push_back(MakeOrderedPair(a, b));
+                    }
+                }
             }
         }
     }
+    
 
     for (const auto& pair : currentCollisions){
         const bool wasColliding = std::find(previousCollisions.begin(), previousCollisions.end(), pair) != previousCollisions.end();
