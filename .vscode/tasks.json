@@ -18,6 +18,7 @@
                 "${workspaceFolder}\\src\\main.cpp",
                 "${workspaceFolder}\\src\\GameObject.cpp",
                 "${workspaceFolder}\\src\\Renderer.cpp",
+                "${workspaceFolder}\\src\\glad.c",
                 "-o",
                 "${workspaceFolder}\\bin\\ecs.exe",
                 "-lmingw32",

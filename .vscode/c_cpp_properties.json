@@ -3,10 +3,11 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/src/include",
-                "${workspaceFolder}/src/include/SDL2",
-                "${workspaceFolder}/include"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/glad",
+                "${workspaceFolder}/include/SDL2",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -17,8 +18,7 @@
             "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "intelliSenseMode": "windows-gcc-x64"
         }
     ],
     "version": 4

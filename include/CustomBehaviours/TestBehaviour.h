@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include "CustomBehaviour.h"
+#include "Components/CustomBehaviour.h"
 #include "InputManager.h"
 
 class TestBehaviour : public CustomBehaviour{
