@@ -18,6 +18,9 @@
 #include "Components/Rigidbody.h"
 #include "Components/BoxCollider.h"
 #include "Components/CircleCollider.h"
+#include "Components/CustomBehaviour.h"
+
+#include "CustomBehaviours/TestBehaviour.h"
 
 #include <SDL2/SDL.h>
 
