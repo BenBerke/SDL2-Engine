@@ -1,159 +1,128 @@
+#include <glad/glad.h>
+#include <SDL2/SDL.h>
 #include <iostream>
-#include <math.h>
+#include <vector>
 
 #include "Renderer.h"
-#include "Scene.h"
+#include "shader.h"
+#include "config.h"
+
+#include "core/Matrix3x3.h"
+
 #include "Components/SpriteRenderer.h"
+#include "Components/Transform.h"
 
-bool InitRenderer(SDL_Window*& window, SDL_Renderer*& renderer)
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+static Shader* g_Shader = nullptr;
+static unsigned int g_VAO = 0, g_VBO = 0, g_EBO = 0;
+
+bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext)
 {
-    SDL_SetMainReady();
-
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-        std::cout << "SDL_Init failed: " << SDL_GetError() << std::endl;
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "SDL_Init failed: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) != IMG_INIT_PNG)
-    {
-        std::cout << "IMG_Init failed: " << IMG_GetError() << std::endl;
-        SDL_Quit();
-        return false;
-    }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     window = SDL_CreateWindow(
-        "Hello, World!",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        SCREEN_WIDTH,
-        SCREEN_HEIGHT,
-        SDL_WINDOW_ALLOW_HIGHDPI);
-
-    if (window == nullptr)
-    {
-        std::cout << "SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
-        IMG_Quit();
-        SDL_Quit();
+        "OpenGL Renderer",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        SCREEN_WIDTH, SCREEN_HEIGHT,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI
+    );
+    if (!window) {
+        std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (renderer == nullptr)
-    {
-        std::cout << "SDL_CreateRenderer failed: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(window);
-        IMG_Quit();
-        SDL_Quit();
-        window = nullptr;
+    glContext = SDL_GL_CreateContext(window);
+    if (!glContext) {
+        std::cerr << "SDL_GL_CreateContext failed: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        std::cerr << "Failed to initialize GLAD\n";
+        return false;
+    }
 
+    SDL_GL_SetSwapInterval(1);
+    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // === SHADER SETUP ===
+    g_Shader = new Shader("src/shaders/basic.vert", "src/shaders/basic.frag");
+    g_Shader->use();
+
+    // === TRIANGLE VERTICES ===
+    float vertices[] = {
+        // positions        // colors
+         0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+         0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    // === INDICES (EBO) ===
+    unsigned int indices[] = {
+        0, 1, 2  // draw a single triangle
+    };
+
+
+    glGenVertexArrays(1, &g_VAO);
+    glGenBuffers(1, &g_VBO);
+    glBindVertexArray(g_VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, g_VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &g_EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
     return true;
 }
 
-void BeginFrame(SDL_Renderer* renderer, SDL_Color clearColor)
+void DestroyWindow(SDL_Window* window, SDL_GLContext glContext)
 {
-    if (!renderer) return;
+    glDeleteVertexArrays(1, &g_VAO);
+    glDeleteBuffers(1, &g_VBO);
+    glDeleteBuffers(1, &g_EBO);
+    delete g_Shader;
 
-    SDL_SetRenderDrawColor(renderer, clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-    SDL_RenderClear(renderer);
+    SDL_GL_DeleteContext(glContext);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
-void RenderScene(SDL_Renderer* renderer, Scene& scene, SDL_Color clearColor, SDL_Point pivot)
-{
-    if (!renderer) return;
+static std::vector<SpriteRenderer*> sprites;
 
-    BeginFrame(renderer, clearColor);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    for (const auto& objectPtr : scene.GetObjects())
-    {
-        if (!objectPtr || !objectPtr->isActive) continue;
-
-        SpriteRenderer* sprite = objectPtr->GetComponent<SpriteRenderer>();
-        if (!sprite) continue;
-
-        SDL_Rect rect{};
-        if (!sprite->BuildRect(rect)) continue;
-
-        SDL_Point renderPivot = pivot;
-        if (renderPivot.x < 0 || renderPivot.y < 0)
-        {
-            renderPivot.x = rect.w / 2;
-            renderPivot.y = rect.h / 2;
-        }
-
-        float rotationRadians = 0.0f;
-        float rotationDegrees = 0.0f;
-        Transform* transform = objectPtr->GetComponent<Transform>();
-        if (transform)
-        {
-            rotationRadians = transform->rotation;
-            rotationDegrees = rotationRadians * (180.0f / static_cast<float>(M_PI));
-        }
-
-        if (sprite->HasTexture())
-        {
-            SDL_Texture* texture = sprite->GetTexture();
-            if (!texture) continue;
-
-            SDL_RenderCopyEx(renderer, texture, nullptr, &rect, rotationDegrees, &renderPivot, SDL_FLIP_NONE);
-        }
-        else
-        {
-            SDL_Color drawColor{};
-            SDL_GetRenderDrawColor(renderer, &drawColor.r, &drawColor.g, &drawColor.b, &drawColor.a);
-
-            const SDL_FPoint pivotWorld = {
-                static_cast<float>(rect.x + renderPivot.x),
-                static_cast<float>(rect.y + renderPivot.y)
-            };
-
-            SDL_FPoint corners[4] = {
-                {static_cast<float>(rect.x), static_cast<float>(rect.y)},
-                {static_cast<float>(rect.x + rect.w), static_cast<float>(rect.y)},
-                {static_cast<float>(rect.x + rect.w), static_cast<float>(rect.y + rect.h)},
-                {static_cast<float>(rect.x), static_cast<float>(rect.y + rect.h)}
-            };
-
-            const float cosAngle = cosf(rotationRadians);
-            const float sinAngle = sinf(rotationRadians);
-
-            SDL_Vertex vertices[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                const float dx = corners[i].x - pivotWorld.x;
-                const float dy = corners[i].y - pivotWorld.y;
-                vertices[i].position.x = pivotWorld.x + dx * cosAngle - dy * sinAngle;
-                vertices[i].position.y = pivotWorld.y + dx * sinAngle + dy * cosAngle;
-                vertices[i].color = drawColor;
-                vertices[i].tex_coord = {0.0f, 0.0f};
-            }
-
-            const int indices[6] = {0, 1, 2, 2, 3, 0};
-            SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+void Update(const Scene& scene){
+    const auto& objects = scene.GetObjects();
+    for (const auto& obj : objects){
+        if(!obj || !obj->isActive) continue;
+        if(auto collider = obj->GetComponent<SpriteRenderer>()){
+            sprites.push_back(collider);
         }
     }
 
-    EndFrame(renderer);
-}
+    for(SpriteRenderer* sr : sprites){
+        Transform* t = sr->owner->GetComponent<Transform>();
+        if (!t) continue;
 
-void EndFrame(SDL_Renderer* renderer)
-{
-    if (!renderer) return;
+        Matrix3x3 model = t->GetMatrix();
+        int loc = glGetUniformLocation(g_Shader->ID, "uTransform");
+        glUniformMatrix3fv(loc, 1, GL_FALSE, &model.m[0][0]);
 
-    SDL_RenderPresent(renderer);
-}
-
-void DestroyRenderer(SDL_Window* window, SDL_Renderer* renderer)
-{
-    if (renderer) SDL_DestroyRenderer(renderer);
-    if (window) SDL_DestroyWindow(window);
-
-    IMG_Quit();
-    SDL_Quit();
+        glBindVertexArray(g_VAO);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+    }
 }

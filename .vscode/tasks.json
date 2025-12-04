@@ -9,42 +9,45 @@
                 "-std=c++17",
                 "-Wall",
                 "-Wextra",
-                "-I",
-                "${workspaceFolder}\\include",
-                "-I",
-                "${workspaceFolder}\\src\\include",
-                "-L",
-                "${workspaceFolder}\\src\\lib",
+                "-I", "${workspaceFolder}\\include",
+                "-L", "${workspaceFolder}\\src\\lib",
                 "${workspaceFolder}\\src\\main.cpp",
-                "${workspaceFolder}\\src\\GameObject.cpp",
                 "${workspaceFolder}\\src\\Renderer.cpp",
+                "${workspaceFolder}\\src\\GameObject.cpp",
+                "${workspaceFolder}\\src\\InputManager.cpp",
+                "${workspaceFolder}\\src\\Physics.cpp",
                 "${workspaceFolder}\\src\\glad.c",
-                "-o",
-                "${workspaceFolder}\\bin\\ecs.exe",
+                "-o", "${workspaceFolder}\\bin\\ecs.exe",
                 "-lmingw32",
                 "-lSDL2main",
                 "-lSDL2",
-                "-lSDL2_image"
+                "-lSDL2_image",
+                "-lopengl32",
+                "-lgdi32"
             ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "options": { "cwd": "${workspaceFolder}" },
             "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Run SDL2 app",
+            "type": "shell",
+            "command": "${workspaceFolder}\\bin\\ecs.exe",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "always",
+                "clear": true
+            }
         },
         {
             "label": "Build and Run SDL2 app",
             "type": "shell",
-            "dependsOn": "Build SDL2 app",
+            "command": "echo Build and run",
+            "dependsOn": [
+                "Build SDL2 app",
+                "Run SDL2 app"
+            ],
             "dependsOrder": "sequence",
-            "command": "${workspaceFolder}\\bin\\ecs.exe",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": { "kind": "build", "isDefault": true },
             "presentation": {
                 "panel": "dedicated",
                 "reveal": "always",

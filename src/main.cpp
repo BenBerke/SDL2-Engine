@@ -1,4 +1,5 @@
 #include <iostream>
+#include <glad/glad.h>
 
 #include "Renderer.h"
 
@@ -8,9 +9,6 @@
 #include "GameTime.h"
 #include "Physics.h"
 #include "InputManager.h"
-
-#include "Physics.cpp"
-#include "InputManager.cpp"
 
 #include "Components/Transform.h"
 #include "Components/Camera.h"
@@ -24,71 +22,34 @@
 
 #include <SDL2/SDL.h>
 
-int main(int argc, char* argv[])
+int main()
 {
-    (void)argc;
-    (void)argv;
-
     SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
+    SDL_GLContext glContext;
 
-    if (!InitRenderer(window, renderer))
-    {
-        return 1;
-    }
-
-    Scene currentScene;
-
-    GameObject& player = currentScene.CreateObject<GameObject>();
-    player.AddComponent<SpriteRenderer>(Vector2{1,1});
-    player.AddComponent<BoxCollider>(1.0f, 1.0f);
-    player.AddComponent<Rigidbody>();
-    player.GetComponent<Rigidbody>()->hasGravity = false;
-    player.GetComponent<Transform>()->rotation = 67;
-
-    GameObject& floor = currentScene.CreateObject<GameObject>();
-    floor.GetComponent<Transform>()->position = Vector2{0, -7};
-    floor.AddComponent<SpriteRenderer>(Vector2{5,1});
-    floor.AddComponent<BoxCollider>(5, 1);
-
-
-    GameObject& camera = currentScene.CreateObject<GameObject>();
-    Camera& cameraComponent = camera.AddComponent<Camera>();
-
-    currentScene.SetActiveCamera(cameraComponent);
+    if (!InitWindow(window, glContext))
+        return -1;
 
     bool running = true;
+    SDL_Event event;
+
     while (running)
     {
-        InputManager::Update();
-        Physics::Update(currentScene);
-        GameTime::Update();
-        currentScene.Update();
-
-        SDL_Event event{};
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-            {
-                running = false;
-            }
+            running = false;
         }
 
-        Rigidbody* playerRb = player.GetComponent<Rigidbody>();
 
-        if (playerRb){
-            if(InputManager::GetKey(SDL_SCANCODE_A)) playerRb->AddForce(Vector2{-0.2f, 0.0f});
-            if(InputManager::GetKey(SDL_SCANCODE_D)) playerRb->AddForce(Vector2{0.2f, 0.0f});
-            if(InputManager::GetKey(SDL_SCANCODE_W)) playerRb->AddForce(Vector2{0.0f, 0.2f});
-            if(InputManager::GetKey(SDL_SCANCODE_S)) playerRb->AddForce(Vector2{0.0f, -0.2f});
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);  // Dark gray background
+        glClear(GL_COLOR_BUFFER_BIT);
 
-            if(InputManager::GetKey(SDL_SCANCODE_X)) playerRb->ApplyTorque(1);
-            if(InputManager::GetKeyUp(SDL_SCANCODE_X)) playerRb->angularVelocity = 0;
-        }
-        RenderScene(renderer, currentScene);
+        DrawTriangle();
+
+        SDL_GL_SwapWindow(window);
     }
 
-    DestroyRenderer(window, renderer);
-
+    DestroyWindow(window, glContext);
     return 0;
 }
