@@ -1,14 +1,19 @@
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+
 #include <iostream>
 #include <glad/glad.h>
-
-#include "Renderer.h"
 
 #include "GameObject.h"
 #include "config.h"
 #include "Scene.h"
+
 #include "GameTime.h"
 #include "Physics.h"
 #include "InputManager.h"
+#include "Renderer.h"
+
+#include "core/Vector.h"
 
 #include "Components/Transform.h"
 #include "Components/Camera.h"
@@ -20,19 +25,23 @@
 
 #include "CustomBehaviours/TestBehaviour.h"
 
-#include <SDL2/SDL.h>
 
 int main()
 {
     SDL_Window* window = nullptr;
     SDL_GLContext glContext;
 
-    if (!InitWindow(window, glContext))
+    if (!Renderer::InitWindow(window, glContext))
         return -1;
+
+    Scene currentScene;
+
+    GameObject& obj = currentScene.CreateObject<GameObject>();
+    obj.AddComponent<SpriteRenderer>();
+   // obj.GetComponent<SpriteRenderer>()->SetTexture("Textures/container.jpg");
 
     bool running = true;
     SDL_Event event;
-
     while (running)
     {
         while (SDL_PollEvent(&event))
@@ -40,16 +49,19 @@ int main()
             if (event.type == SDL_QUIT)
             running = false;
         }
+        InputManager::Update();
 
+        if (InputManager::GetKey(SDL_SCANCODE_A)) {
+            auto t = obj.GetComponent<Transform>();
+            t->position.x -= -.01f;
+        }
 
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);  // Dark gray background
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        DrawTriangle();
-
+        Physics::Update(currentScene);
+        GameTime::Update();
+        Renderer::Update(currentScene);
         SDL_GL_SwapWindow(window);
     }
 
-    DestroyWindow(window, glContext);
+    Renderer::DestroyWindow(window, glContext);
     return 0;
 }

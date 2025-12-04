@@ -1,53 +1,31 @@
+// SpriteRenderer.h
 #pragma once
 #include "Component.h"
+#include <string>
 
-#include "Transform.h"
-#include "config.h"
-#include "core/Vector2.h"
+enum class ShapeType {
+    None,
+    Triangle,
+    Square,
+    Circle
+};
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-
-class SpriteRenderer : public Component{
-private:
-    Transform* transform;
-    Vector2 size;
-    SDL_Texture* texture;
+class SpriteRenderer : public Component {
 public:
-    SpriteRenderer(Vector2 s = Vector2{1, 1}) : transform(nullptr), size(s), texture(nullptr) {}
+    unsigned int textureID = 0;
+    bool hasTexture = false;
+    ShapeType shape = ShapeType::Square;
+    Vector3 color = {1.0f, 1.0f, 1.0f}; 
 
-    bool BuildRect(SDL_Rect& outRect){
-        if (!transform && owner) {
-            transform = owner->GetComponent<Transform>();
-        }
-        if (!transform) return false;
+    std::string texturePath; 
 
-        const Vector2 screenPos = transform->GetScreenPosition();
-        const float widthPixels = size.x * PIXELS_PER_UNIT * transform->scale.x;
-        const float heightPixels = size.y * PIXELS_PER_UNIT * transform->scale.y;
-
-        outRect.x = static_cast<int>(screenPos.x - widthPixels * 0.5f);
-        outRect.y = static_cast<int>(screenPos.y - heightPixels * 0.5f);
-        outRect.w = static_cast<int>(widthPixels);
-        outRect.h = static_cast<int>(heightPixels);
-        return true;
+    void SetTexture(const std::string& path) {
+        texturePath = path;
+        textureID = Renderer::GenerateTexture(path.c_str());
+        hasTexture = (textureID != 0);
     }
 
-    SDL_Texture* GetTexture() const {
-        return texture;
-    }
+    bool HasTexture() const { return hasTexture; }
 
-    void SetTexture(SDL_Texture* tex) {
-        texture = tex;
-    }
-
-    bool HasTexture() const {
-        return texture != nullptr;
-    }
-
-    void Update() override{
-        if (!transform && owner) {
-            transform = owner->GetComponent<Transform>();
-        }
-    }
+    void SetColor(float r, float g, float b) { color = {r,g,b}; }
 };

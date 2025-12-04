@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cmath>
 
+#include "config.h"
+
 struct Matrix3x3{
     float m[3][3];
 
@@ -100,5 +102,4 @@ struct Matrix3x3{
 
         return *this;
     }
-
 };

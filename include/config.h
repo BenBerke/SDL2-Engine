@@ -1,5 +1,5 @@
 #pragma once
-#include "core/Vector2.h"
+#include "core/Vector.h"
 
 const int SCREEN_WIDTH = 960, SCREEN_HEIGHT = 600, PIXELS_PER_UNIT = 32;
 const int SCREEN_WIDTH_CENTER = static_cast<int>(SCREEN_WIDTH/2), SCREEN_HEIGHT_CENTRE = static_cast<int>(SCREEN_HEIGHT/2);

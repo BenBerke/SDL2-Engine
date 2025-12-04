@@ -12,9 +12,11 @@
 
 class Scene;
 
-bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext);
-unsigned int LoadTexture(const char* path);
-void DrawTriangle();
-void DestroyWindow(SDL_Window* window, SDL_GLContext glContext);
-void Update(const Scene& scene);
+namespace Renderer{
+    bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext);
+    int GenerateTexture(const char* imagePath);
+    void DrawTriangle();
+    void DestroyWindow(SDL_Window* window, SDL_GLContext glContext);
+    void Update(const Scene& scene);
+}
 

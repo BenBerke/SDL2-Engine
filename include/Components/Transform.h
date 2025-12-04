@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include "Component.h"
-#include "core/Vector2.h"
+#include "core/Vector.h"
 #include "core/Matrix3x3.h"
 #include "config.h"
 #include "Scene.h"
