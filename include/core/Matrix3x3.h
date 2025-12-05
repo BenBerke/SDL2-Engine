@@ -1,5 +1,4 @@
 #pragma once
-#include <cmath>
 #include <initializer_list>
 
 struct Matrix3x3{

@@ -25,10 +25,11 @@ bin/obj/Debug/Renderer.o: src/Renderer.cpp include/SDL2/SDL.h \
  include/SDL2/SDL_version.h include/SDL2/SDL_locale.h \
  include/SDL2/SDL_misc.h include/glad/glad.h include/KHR/khrplatform.h \
  include/Renderer.h include/GameObject.h include/Component.h \
- include/shader.h include/glad/glad.h include/Scene.h \
- include/Components/Camera.h include/config.h include/core/Vector.h \
- include/core/Matrix3x3.h include/Components/SpriteRenderer.h \
- include/Components/Transform.h include/stb_image.h
+ include/shader.h include/glad/glad.h include/Scene.h include/config.h \
+ include/core/Vector.h include/Physics.h \
+ include/Components/SpriteRenderer.h include/Components/Transform.h \
+ include/core/Matrix3x3.h include/Components/Collider.h \
+ include/stb_image.h
 include/SDL2/SDL.h:
 include/SDL2/SDL_main.h:
 include/SDL2/SDL_stdinc.h:
@@ -87,10 +88,11 @@ include/Component.h:
 include/shader.h:
 include/glad/glad.h:
 include/Scene.h:
-include/Components/Camera.h:
 include/config.h:
 include/core/Vector.h:
-include/core/Matrix3x3.h:
+include/Physics.h:
 include/Components/SpriteRenderer.h:
 include/Components/Transform.h:
+include/core/Matrix3x3.h:
+include/Components/Collider.h:
 include/stb_image.h:

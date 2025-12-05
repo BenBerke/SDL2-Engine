@@ -1,8 +1,5 @@
 #pragma once
-#include <utility>
 #include <vector>
-#include <limits>
-#include <cmath>
 
 #include "Component.h"
 #include "core/Vector.h"
@@ -31,6 +28,8 @@ public:
     Circle circle;   
 
     bool isTrigger = false; 
+    bool drawGizmo = false;
+    Vector2 scale = {1.0f, 1.0f};
 
     Collider() = default;
 

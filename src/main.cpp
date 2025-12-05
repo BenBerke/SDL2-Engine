@@ -1,29 +1,15 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include <iostream>
-
-#include "GameObject.h"
-#include "config.h"
-#include "Scene.h"
 
 #include "GameTime.h"
-#include "Physics.h"
 #include "InputManager.h"
 #include "Renderer.h"
+#include "Physics.h"
 
-#include "core/Vector.h"
+#include "Scene.h"
+#include "GameObject.h"
 
-#include "Components/Transform.h"
-#include "Components/Camera.h"
-#include "Components/SpriteRenderer.h"
-#include "Components/Rigidbody.h"
-#include "Components/BoxCollider.h"
-#include "Components/CircleCollider.h"
-#include "Components/CustomBehaviour.h"
-
-#include "CustomBehaviours/TestBehaviour.h"
-
-
+#include "Components.h"
 
 
 int main()
@@ -39,6 +25,17 @@ int main()
     GameObject& obj = currentScene.CreateObject<GameObject>();
     obj.AddComponent<SpriteRenderer>();
     obj.GetComponent<SpriteRenderer>()->SetTexture("Assets/Textures/container.jpg");
+    obj.AddComponent<Rigidbody>();
+    obj.AddComponent<BoxCollider>();
+    auto t = obj.GetComponent<Transform>();
+
+    GameObject& floor = currentScene.CreateObject<GameObject>();
+    floor.GetComponent<Transform>()->position = {0, -5};
+    floor.AddComponent<SpriteRenderer>();
+    floor.GetComponent<SpriteRenderer>()->SetTexture("Assets/Textures/container.jpg");
+    floor.AddComponent<BoxCollider>();
+    floor.GetComponent<Transform>()->scale = {1, 1};
+
 
     bool running = true;
     SDL_Event event;
@@ -51,10 +48,8 @@ int main()
         }
         InputManager::Update();
 
-        if (InputManager::GetKey(SDL_SCANCODE_A)) {
-            auto t = obj.GetComponent<Transform>();
-            t->position.x -= -.01f;
-        }
+        if (InputManager::GetKey(SDL_SCANCODE_A)) t->position.x -= .01f;
+        if (InputManager::GetKey(SDL_SCANCODE_D)) t->position.x += .01f;
 
         Physics::Update(currentScene);
         GameTime::Update();

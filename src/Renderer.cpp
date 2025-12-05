@@ -8,10 +8,12 @@
 #include "shader.h"
 #include "Scene.h"
 #include "config.h"
-#include "core/Matrix3x3.h"
+#include "Physics.h"
 
 #include "Components/SpriteRenderer.h"
 #include "Components/Transform.h"
+#include "Components/Collider.h"
+
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -19,6 +21,38 @@
 static Shader* g_Shader = nullptr;
 
 namespace Renderer{
+
+struct GizmoVertex {
+    float x, y;
+    float r, g, b;
+};
+
+static unsigned int g_GizmoVAO = 0;
+static unsigned int g_GizmoVBO = 0;
+static bool g_GizmosInitialized = false;
+
+static void InitGizmos()
+{
+    if (g_GizmosInitialized) return;
+    g_GizmosInitialized = true;
+
+    glGenVertexArrays(1, &g_GizmoVAO);
+    glGenBuffers(1, &g_GizmoVBO);
+
+    glBindVertexArray(g_GizmoVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, g_GizmoVBO);
+
+    // layout: position (2 floats) + color (3 floats) = 5 floats
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+}
+
+
 struct ShapeData {
     unsigned int VAO;
     unsigned int VBO;
@@ -175,6 +209,8 @@ bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext)
 
     g_Shader = new Shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     g_Shader->use();
+
+    InitGizmos();
     
     glUniform1i(glGetUniformLocation(g_Shader->ID, "uTexture"), 0);
     g_Shapes[ShapeType::Triangle] = CreateTriangleShape();
@@ -247,6 +283,89 @@ void CreateTriangle(Vector2 pos, float r, float g, float b)
     triangles.push_back(t);
 }
 
+static void DrawColliderGizmos()
+{
+    using namespace Physics;
+
+    const auto& colliders = GetColliders();
+    if (colliders.empty()) return;
+
+    std::vector<GizmoVertex> vertices;
+    vertices.reserve(colliders.size() * 32); // rough
+
+    for (Collider* collider : colliders) {
+        if (!collider || !collider->drawGizmo) continue;
+        if (!collider->owner || !collider->owner->isActive) continue;
+
+        Transform* t = collider->owner->GetComponent<Transform>();
+        if (!t) continue;
+
+        if (collider->type == ColliderType::Polygon) {
+            Polygon poly = ToWorldSpace(*collider);
+            if (poly.vertices.size() < 2) continue;
+
+            // green lines
+            float r = 0.0f, g = 1.0f, b = 0.0f;
+
+            // line loop: (v0->v1, v1->v2, ..., vn-1->v0)
+            for (size_t i = 0; i < poly.vertices.size(); ++i) {
+                Vector2 a = poly.vertices[i];
+                Vector2 bPos = poly.vertices[(i + 1) % poly.vertices.size()];
+
+                vertices.push_back({ a.x,     a.y,     r, g, b });
+                vertices.push_back({ bPos.x,  bPos.y,  r, g, b });
+            }
+
+        } else if (collider->type == ColliderType::Circle) {
+            Vector2 pos = t->position;
+            float radius = collider->circle.radius * collider->scale.x;
+            const int segments = 32;
+            float rCol = 1.0f, gCol = 0.0f, bCol = 0.0f; // red
+
+            Vector2 prev{
+                pos.x + radius,
+                pos.y
+            };
+
+            for (int i = 1; i <= segments; ++i) {
+                float theta = 2.0f * 3.1415926535f * (float)i / (float)segments;
+                Vector2 cur{
+                    pos.x + radius * std::cos(theta),
+                    pos.y + radius * std::sin(theta)
+                };
+
+                vertices.push_back({ prev.x, prev.y, rCol, gCol, bCol });
+                vertices.push_back({ cur.x,  cur.y,  rCol, gCol, bCol });
+
+                prev = cur;
+            }
+        }
+    }
+
+    if (vertices.empty()) return;
+
+    int loc = glGetUniformLocation(g_Shader->ID, "uTransform");
+    float identity[9] = {
+        1,0,0,
+        0,1,0,
+        0,0,1
+    };
+    glUniformMatrix3fv(loc, 1, GL_FALSE, identity);
+    glUniform1i(glGetUniformLocation(g_Shader->ID, "uHasTexture"), false);
+
+    glBindVertexArray(g_GizmoVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, g_GizmoVBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 vertices.size() * sizeof(GizmoVertex),
+                 vertices.data(),
+                 GL_DYNAMIC_DRAW);
+
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(vertices.size()));
+
+    glBindVertexArray(0);
+}
+
+
 static std::vector<SpriteRenderer*> sprites;
 
 void Update(const Scene& scene){
@@ -299,6 +418,8 @@ void Update(const Scene& scene){
         }
 
     }
+
+    DrawColliderGizmos();
 
 }
 

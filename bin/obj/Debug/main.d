@@ -23,15 +23,15 @@ bin/obj/Debug/main.o: src/main.cpp include/SDL2/SDL.h \
  include/SDL2/SDL_render.h include/SDL2/SDL_shape.h \
  include/SDL2/SDL_system.h include/SDL2/SDL_timer.h \
  include/SDL2/SDL_version.h include/SDL2/SDL_locale.h \
- include/SDL2/SDL_misc.h include/GameObject.h include/Component.h \
- include/config.h include/core/Vector.h include/Scene.h \
- include/Components/Camera.h include/GameTime.h include/Physics.h \
- include/InputManager.h include/Renderer.h include/Components/Transform.h \
- include/core/Matrix3x3.h include/Components/SpriteRenderer.h \
- include/Components/Rigidbody.h include/Components/BoxCollider.h \
+ include/SDL2/SDL_misc.h include/GameTime.h include/InputManager.h \
+ include/Renderer.h include/Physics.h include/Scene.h \
+ include/GameObject.h include/Component.h include/Components.h \
+ include/Components/Transform.h include/core/Vector.h \
+ include/core/Matrix3x3.h include/Components/Camera.h \
+ include/Components/SpriteRenderer.h include/Components/Rigidbody.h \
+ include/config.h include/Components/BoxCollider.h \
  include/Components/Collider.h include/Components/CircleCollider.h \
- include/Components/CustomBehaviour.h \
- include/CustomBehaviours/TestBehaviour.h
+ include/Components/CustomBehaviour.h
 include/SDL2/SDL.h:
 include/SDL2/SDL_main.h:
 include/SDL2/SDL_stdinc.h:
@@ -82,22 +82,22 @@ include/SDL2/SDL_timer.h:
 include/SDL2/SDL_version.h:
 include/SDL2/SDL_locale.h:
 include/SDL2/SDL_misc.h:
-include/GameObject.h:
-include/Component.h:
-include/config.h:
-include/core/Vector.h:
-include/Scene.h:
-include/Components/Camera.h:
 include/GameTime.h:
-include/Physics.h:
 include/InputManager.h:
 include/Renderer.h:
+include/Physics.h:
+include/Scene.h:
+include/GameObject.h:
+include/Component.h:
+include/Components.h:
 include/Components/Transform.h:
+include/core/Vector.h:
 include/core/Matrix3x3.h:
+include/Components/Camera.h:
 include/Components/SpriteRenderer.h:
 include/Components/Rigidbody.h:
+include/config.h:
 include/Components/BoxCollider.h:
 include/Components/Collider.h:
 include/Components/CircleCollider.h:
 include/Components/CustomBehaviour.h:
-include/CustomBehaviours/TestBehaviour.h:

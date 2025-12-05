@@ -1,18 +1,15 @@
-#include "Physics.h"
-
 #include "pch.h"
+
+#include "Physics.h"
 
 #include "core/Vector.h"
 #include "core/Matrix3x3.h"
 
-#include "Components/Collider.h"
-#include "Components/Rigidbody.h"
+#include "Components.h"
 
 #include "config.h"
-#include "Components/CustomBehaviour.h"
 #include "GameTime.h"
 #include "GameObject.h"
-#include "Components/Transform.h"
 #include "Scene.h"
 
 struct SpatialGrid {
@@ -112,6 +109,11 @@ static Polygon ToWorldSpaceFull(const Collider& collider, const Vector2& overrid
 
     Matrix3x3 mat = transform->GetMatrix();
 
+    mat.m[0][0] *= collider.scale.x;
+    mat.m[1][0] *= collider.scale.x;
+    mat.m[0][1] *= collider.scale.y;
+    mat.m[1][1] *= collider.scale.y;
+
     if (overridePos != Vector2{0, 0}) {
         mat.m[0][2] = overridePos.x;
         mat.m[1][2] = overridePos.y;
@@ -125,12 +127,18 @@ static Polygon ToWorldSpaceFull(const Collider& collider, const Vector2& overrid
 }
 
 
-static Polygon ToWorldSpace(const Collider& collider){
+Polygon ToWorldSpace(const Collider& collider){
     Polygon worldPoly;
     const Transform* transform = collider.owner ? collider.owner->GetComponent<Transform>() : nullptr;
     if(!transform) return worldPoly;
 
     Matrix3x3 mat = transform->GetMatrix();
+
+    mat.m[0][0] *= collider.scale.x;
+    mat.m[1][0] *= collider.scale.x;
+    mat.m[0][1] *= collider.scale.y;
+    mat.m[1][1] *= collider.scale.y;
+
     worldPoly.vertices.reserve(collider.shape.vertices.size());
 
     for(const auto& v : collider.shape.vertices){
@@ -295,7 +303,6 @@ bool Collides(const Collider& collider){
 }
 
 SpatialGrid grid;
-
 void Update(const Scene& scene){
     colliders.clear();
     rigidbodies.clear();
@@ -350,32 +357,46 @@ void Update(const Scene& scene){
         Vector2 newPos = startPos;
 
         auto resolveAxis = [&](float deltaAxis, bool isX){
-            if(deltaAxis == 0.0f){
-                return;
-            }
+            if (deltaAxis == 0.0f) return;
+
             Vector2 offset = isX ? Vector2{deltaAxis, 0.0f} : Vector2{0.0f, deltaAxis};
             Vector2 target = newPos + offset;
 
-            if (collider && CollidesAt(*collider, target)){
-                Vector2 bestPos = newPos;
-                float low = 0.0f, high = 1.0f;
-                for (int i = 0; i < 6; ++i){
-                    const float mid = (low + high) * 0.5f;
-                    Vector2 step = offset * mid;
-                    Vector2 candidate = newPos + step;
-                    if (CollidesAt(*collider, candidate)){
-                        high = mid;
-                    }else{
-                        low = mid;
-                        bestPos = candidate;
+            bool collidedWithSolid = false;
+
+            if (collider && CollidesAt(*collider, target)) {
+                for (Collider* other : colliders) {
+                    if (!other || other == collider) continue;
+                    if (!other->owner || !other->owner->isActive) continue;
+
+                    if (CheckCollision(*collider, *other)) {
+                        if (!collider->isTrigger && !other->isTrigger) {
+                            collidedWithSolid = true;
+                            break;
+                        }
                     }
                 }
-                newPos = bestPos;
-                if (isX) velocity.x = 0.0f;
-                else velocity.y = 0.0f;
-            }else{
-                newPos = target;
-            }
+
+                if (collidedWithSolid) {
+                    Vector2 bestPos = newPos;
+                    float low = 0.0f, high = 1.0f;
+                    for (int i = 0; i < 6; ++i) {
+                        const float mid = (low + high) * 0.5f;
+                        Vector2 step = offset * mid;
+                        Vector2 candidate = newPos + step;
+                        if (CollidesAt(*collider, candidate))high = mid;
+                        else {
+                            low = mid;
+                            bestPos = candidate;
+                        }
+                    }
+                    newPos = bestPos;
+                    if (isX) velocity.x = 0.0f;
+                    else velocity.y = 0.0f;
+                } else newPos = target;
+            
+            }  else newPos = target;
+    
         };
 
         resolveAxis(delta.x, true);
@@ -434,4 +455,9 @@ void Update(const Scene& scene){
 
     previousCollisions = std::move(currentCollisions);
 }
+
+const std::vector<Collider*>& GetColliders() {
+    return colliders;
+}
+
 } // namespace Physics

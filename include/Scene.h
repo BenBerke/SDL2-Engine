@@ -3,7 +3,8 @@
 #include <memory>
 
 #include "GameObject.h"
-#include "Components/Camera.h"
+
+class Camera;
 
 class Scene{
     private:
