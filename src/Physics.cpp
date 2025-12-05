@@ -1,10 +1,6 @@
 #include "Physics.h"
 
-#include <algorithm>
-#include <iostream>
-#include <utility>
-#include <vector>
-#include <unordered_map>
+#include "pch.h"
 
 #include "core/Vector.h"
 #include "core/Matrix3x3.h"

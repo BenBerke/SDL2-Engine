@@ -1,9 +1,4 @@
-#include <glad/glad.h>
-#include <SDL2/SDL.h>
-#include <iostream>
-#include <vector>
-#include <unordered_map>
-#include <filesystem>
+#include "pch.h"
 
 #include "Renderer.h"
 #include "shader.h"
@@ -97,15 +92,17 @@ ShapeData CreateSquareShape() {
 ShapeData CreateTexturedQuad() {
     ShapeData shape;
 
+    // Convert 1 world-unit to screen space
     float s = (PIXELS_PER_UNIT * 2.0f) / SCREEN_WIDTH;
+    float aspect = (float)SCREEN_WIDTH / SCREEN_HEIGHT;
     float half = s / 2.0f;
 
     float vertices[] = {
-        // positions       // colors        // texcoords
-        -half,  half, 0.0f,  1,1,1,   0.0f, 1.0f,
-         half,  half, 0.0f,  1,1,1,   1.0f, 1.0f,
-         half, -half, 0.0f,  1,1,1,   1.0f, 0.0f,
-        -half, -half, 0.0f,  1,1,1,   0.0f, 0.0f
+        // positions                // colors        // texcoords
+        -half,  half * aspect, 0.0f,  1,1,1,   0.0f, 1.0f,
+         half,  half * aspect, 0.0f,  1,1,1,   1.0f, 1.0f,
+         half, -half * aspect, 0.0f,  1,1,1,   1.0f, 0.0f,
+        -half, -half * aspect, 0.0f,  1,1,1,   0.0f, 0.0f
     };
 
     unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
@@ -120,19 +117,17 @@ ShapeData CreateTexturedQuad() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // positions (3)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // colors (3)
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    // texcoords (2)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     shape.indexCount = 6;
     return shape;
 }
+
 
 
 bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext)
@@ -175,7 +170,8 @@ bool InitWindow(SDL_Window*& window, SDL_GLContext& glContext)
 
     g_Shader = new Shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     g_Shader->use();
-
+    
+    glUniform1i(glGetUniformLocation(g_Shader->ID, "uTexture"), 0);
     g_Shapes[ShapeType::Triangle] = CreateTriangleShape();
     g_Shapes[ShapeType::Square]   = CreateSquareShape();
     g_TexturedQuad = CreateTexturedQuad();
@@ -187,16 +183,26 @@ int GenerateTexture(const char* imagePath){
     unsigned int texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     int width, height, nrChannels;
     unsigned char *data = stbi_load(imagePath, &width, &height, &nrChannels, 0);
-    if(data){
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    if (data) {
+        GLenum format = GL_RGB;
+        if (nrChannels == 1)      format = GL_RED;
+        else if (nrChannels == 3) format = GL_RGB;
+        else if (nrChannels == 4) format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-    } else std::cout << "Failed to load texture" << std::endl;
+    } else {
+        std::cout << "Failed to load texture: " << imagePath << std::endl;
+    }
+
     stbi_image_free(data);
     return texture;
 }

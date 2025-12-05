@@ -1,8 +1,4 @@
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-
-#include <iostream>
-#include <glad/glad.h>
+#include "pch.h"
 
 #include "GameObject.h"
 #include "config.h"
@@ -38,7 +34,7 @@ int main()
 
     GameObject& obj = currentScene.CreateObject<GameObject>();
     obj.AddComponent<SpriteRenderer>();
-   // obj.GetComponent<SpriteRenderer>()->SetTexture("Textures/container.jpg");
+    obj.GetComponent<SpriteRenderer>()->SetTexture("Assets/Textures/container.jpg");
 
     bool running = true;
     SDL_Event event;
