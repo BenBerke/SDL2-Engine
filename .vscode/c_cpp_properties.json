@@ -5,6 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/src",
+                "C:/libs/box2d-main/include",
+                "C:/libs/box2d-main/src",
                 "${workspaceFolder}/**"
             ],
             "defines": [
@@ -23,7 +25,9 @@
             "browse": {
                 "path": [
                     "${workspaceFolder}/include",
-                    "${workspaceFolder}/src"
+                    "${workspaceFolder}/src",
+                    "C:/libs/box2d-main/include",
+                    "C:/libs/box2d-main/src"
                 ],
                 "limitSymbolsToIncludedHeaders": false
             }
