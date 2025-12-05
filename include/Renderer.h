@@ -4,11 +4,8 @@
 #define SDL_MAIN_HANDLED
 #endif
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <string>
-
-#include "config.h"
+struct SDL_Window;
+using SDL_GLContext = void*; // SDL2 uses a void* handle for GL contexts
 
 class Scene;
 
@@ -19,4 +16,3 @@ namespace Renderer{
     void DestroyWindow(SDL_Window* window, SDL_GLContext glContext);
     void Update(const Scene& scene);
 }
-

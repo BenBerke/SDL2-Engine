@@ -4,21 +4,29 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/include/glad",
-                "${workspaceFolder}/include/SDL2",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "SDL_MAIN_HANDLED"
             ],
-            "windowsSdkVersion": "10.0.22621.0",
             "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
             "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-gcc-x64",
+            "forcedInclude": [
+                "${workspaceFolder}/include/pch.h"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/include",
+                    "${workspaceFolder}/src"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            }
         }
     ],
     "version": 4

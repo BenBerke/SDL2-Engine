@@ -1,10 +1,7 @@
 #pragma once
 #include "Component.h"
-#include "Transform.h"
 #include "core/Vector.h"
 #include "config.h"
-#include "GameTime.h"
-#include <algorithm>
 
 class Rigidbody : public Component {
 public:

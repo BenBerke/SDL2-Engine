@@ -1,9 +1,9 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <string>
-#include <unordered_map>
+
+#include <algorithm>
 #include <cmath>
 #include <filesystem>
-#include <SDL2/SDL.h>
-#include <glad/glad.h>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>

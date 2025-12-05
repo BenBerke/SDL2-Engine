@@ -1,6 +1,7 @@
 #pragma once
 #include "Component.h"
-#include "Components/Collider.h"
+
+class Collider;
 
 class CustomBehaviour : public Component{
 public:

@@ -1,4 +1,6 @@
-#include "pch.h"
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+#include <iostream>
 
 #include "GameObject.h"
 #include "config.h"
@@ -20,6 +22,8 @@
 #include "Components/CustomBehaviour.h"
 
 #include "CustomBehaviours/TestBehaviour.h"
+
+
 
 
 int main()

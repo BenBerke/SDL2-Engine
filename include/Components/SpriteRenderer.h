@@ -1,7 +1,12 @@
 // SpriteRenderer.h
 #pragma once
 #include "Component.h"
+#include "core/Vector.h"
 #include <string>
+
+namespace Renderer {
+    int GenerateTexture(const char* imagePath);
+}
 
 enum class ShapeType {
     None,

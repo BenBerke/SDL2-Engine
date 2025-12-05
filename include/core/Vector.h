@@ -29,14 +29,8 @@ struct Vector2{
         y /= other.y;
         return *this;
     }
-    bool operator==(const Vector2& other) const {
-        if(x == other.x && y == other.y) return true;
-        return false;
-    }
-    bool operator!=(const Vector2& other) const {
-        if(x == other.x && y == other.y) return false;
-        return true;
-    }
+    bool operator==(const Vector2& other) const { return x == other.x && y == other.y; }
+    bool operator!=(const Vector2& other) const { return !(x == other.x && y == other.y);}
 
     float Length() const{ return std::sqrt(x*x + y*y); }
     Vector2 Normalized() const { 
@@ -86,14 +80,8 @@ struct Vector3{
         z /= other.z;
         return *this;
     }
-    bool operator==(const Vector3& other) const {
-        if(x == other.x && y == other.y && z == other.z) return true;
-        return false;
-    }
-    bool operator!=(const Vector3& other) const {
-        if(x == other.x && y == other.y && z == other.z) return false;
-        return true;
-    }
+    bool operator==(const Vector3& other) const { return x == other.x && y == other.y && z == other.z;}
+    bool operator!=(const Vector3& other) const { return !(x == other.x && y == other.y && z == other.z);}
 
     float Length() const{ return std::sqrt(x*x + y*y + z*z); }
     Vector3 Normalized() const { 

@@ -1,8 +1,6 @@
 #pragma once
-#include <iostream>
 #include <cmath>
-
-#include "config.h"
+#include <initializer_list>
 
 struct Matrix3x3{
     float m[3][3];

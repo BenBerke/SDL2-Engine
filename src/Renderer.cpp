@@ -1,7 +1,12 @@
 #include "pch.h"
 
+#include <SDL2/SDL.h>
+#include <glad/glad.h>
+
 #include "Renderer.h"
+#include "GameObject.h"
 #include "shader.h"
+#include "Scene.h"
 #include "config.h"
 #include "core/Matrix3x3.h"
 

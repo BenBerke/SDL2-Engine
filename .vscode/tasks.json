@@ -2,57 +2,69 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build SDL2 app",
+            "label": "Make: Debug",
             "type": "shell",
-            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
-            "args": [
-                "-std=c++17",
-                "-Wall",
-                "-Wextra",
-                "-I", "${workspaceFolder}\\include",
-                "-L", "${workspaceFolder}\\src\\lib",
-                "${workspaceFolder}\\src\\main.cpp",
-                "${workspaceFolder}\\src\\Renderer.cpp",
-                "${workspaceFolder}\\src\\GameObject.cpp",
-                "${workspaceFolder}\\src\\InputManager.cpp",
-                "${workspaceFolder}\\src\\Physics.cpp",
-                "${workspaceFolder}\\src\\glad.c",
-                "-o", "${workspaceFolder}\\bin\\ecs.exe",
-                "-lmingw32",
-                "-lSDL2main",
-                "-lSDL2",
-                "-lSDL2_image",
-                "-lopengl32",
-                "-lgdi32"
-            ],
+            "command": "C:\\\\msys64\\\\usr\\\\bin\\\\make.exe",
+            "args": ["CONFIG=Debug"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Make: Release",
+            "type": "shell",
+            "command": "C:\\\\msys64\\\\usr\\\\bin\\\\make.exe",
+            "args": ["CONFIG=Release"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Make: Unity (Debug)",
+            "type": "shell",
+            "command": "C:\\\\msys64\\\\usr\\\\bin\\\\make.exe",
+            "args": ["CONFIG=Debug", "unity"],
             "options": { "cwd": "${workspaceFolder}" },
             "problemMatcher": ["$gcc"]
         },
         {
-            "label": "Run SDL2 app",
+            "label": "Run Debug build",
             "type": "shell",
-            "command": "${workspaceFolder}\\bin\\ecs.exe",
+            "command": "${workspaceFolder}\\bin\\Debug\\ecs.exe",
+            "dependsOn": "Make: Debug",
+            "dependsOrder": "sequence",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}\\\\bin;C:\\\\msys64\\\\ucrt64\\\\bin;${env:PATH}"
+                }
+            },
             "presentation": {
                 "panel": "dedicated",
                 "reveal": "always",
                 "clear": true
-            }
+            },
+            "problemMatcher": []
         },
         {
-            "label": "Build and Run SDL2 app",
+            "label": "Build and Run Debug",
             "type": "shell",
-            "command": "echo Build and run",
-            "dependsOn": [
-                "Build SDL2 app",
-                "Run SDL2 app"
-            ],
+            "command": "${workspaceFolder}\\bin\\Debug\\ecs.exe",
+            "dependsOn": "Make: Debug",
             "dependsOrder": "sequence",
-            "group": { "kind": "build", "isDefault": true },
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "${workspaceFolder}\\\\bin;C:\\\\msys64\\\\ucrt64\\\\bin;${env:PATH}"
+                }
+            },
             "presentation": {
                 "panel": "dedicated",
                 "reveal": "always",
                 "clear": true
-            }
+            },
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": []
         }
     ]
 }
